@@ -1,0 +1,82 @@
+// Impotation des modules nécessaires
+import {
+  createReservation,
+  findOverlappingReservations,
+  getReservationsWithUserId
+} from '../models/Reservation.js'; 
+
+// Fonction utilitaire pour valider les dates
+const isValidDate = (dateStr) => !isNaN(Date.parse(dateStr));
+
+
+export const create = async (req, res) => {
+  try {
+    const { vehicle_id, start_date, end_date } = req.body;
+    const user_id = req.user?.id; // sera défini par le middleware d'auth
+
+    if (!user_id) {
+      return res.status(401).json({ error: 'Authentification requise.' });
+    }
+
+    if (!vehicle_id || !start_date || !end_date) {
+      return res.status(400).json({ error: 'Véhicule, date de début et date de fin requis.' });
+    }
+
+    if (!isValidDate(start_date) || !isValidDate(end_date)) {
+      return res.status(400).json({ error: 'Dates invalides. Utilisez le format ISO (ex: 2026-01-20T10:00:00).' });
+    }
+
+    if (new Date(end_date) <= new Date(start_date)) {
+      return res.status(400).json({ error: 'La date de fin doit être après la date de début.' });
+    }
+
+    // Vérifier les conflits
+    const conflict = await findOverlappingReservations(
+      req.app.get('db'),
+      vehicle_id,
+      start_date,
+      end_date
+    );
+
+    if (conflict) {
+      return res.status(409).json({ error: 'Ce véhicule est déjà réservé sur cette période.' });
+    }
+
+    const reservation = await createReservation(req.app.get('db'), {
+      user_id,
+      vehicle_id,
+      start_date,
+      end_date
+    });
+
+    res.status(201).json(reservation);
+  } catch (error) {
+    console.error('Erreur création réservation:', error);
+    res.status(500).json({ error: 'Impossible de créer la réservation.' });
+  }
+};
+
+export const getUserReservations = async (req, res) => {
+  try {
+    const user_id = req.user?.id;
+    if (!user_id) {
+      return res.status(401).json({ error: 'Authentification requise.' });
+    }
+
+    const reservations = await getReservationsWithUserId(req.app.get('db'), user_id);
+    res.json(reservations);
+  } catch (error) {
+    console.error('Erreur historique réservations:', error);
+    res.status(500).json({ error: 'Impossible de charger vos réservations.' });
+  }
+};
+
+export const getAllReservationsWithDetails = async (req, res) => {
+  try {
+    const reservations = await getAllReservationsWithDetails(req.app.get('db'));
+    res.json(reservations);
+  } catch (error) {
+    console.error('Erreur historique réservations:', error);
+    res.status(500).json({ error: 'Impossible de charger vos réservations.' });
+  }
+};
