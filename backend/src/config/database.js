@@ -39,9 +39,9 @@ const createTables = async (db) => {
       color TEXT NOT NULL,
       seats INTEGER DEFAULT 5 ,
       fuel_type TEXT CHECK(fuel_type IN ('gasoline', 'diesel', 'electric', 'hybrid')) DEFAULT 'gasoline',
+      status TEXT CHECK(status IN ('operational', 'maintenance')) DEFAULT 'operational'
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      status TEXT CHECK(status IN ('operational', 'maintenance')) DEFAULT 'operational'
     );
 
     -- Table reservations
@@ -51,7 +51,7 @@ const createTables = async (db) => {
       vehicle_id INTEGER NOT NULL,
       start_date DATETIME NOT NULL,
       end_date DATETIME NOT NULL,
-      status TEXT CHECK(status IN ('pending','confirmed', 'cancelled')) DEFAULT 'pending',
+      status TEXT CHECK(status IN ('confirmed', 'cancelled')) DEFAULT 'confirmed',
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
       FOREIGN KEY (vehicle_id) REFERENCES vehicules(id) ON DELETE CASCADE,

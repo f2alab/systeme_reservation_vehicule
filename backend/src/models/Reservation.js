@@ -37,7 +37,7 @@ export const getReservationsWithUserId = async (db, user_id) => {
 export const getAllReservationsWithDetails = async (db) => {
   const stmt = await db.prepare(`
     SELECT 
-      r.id, r.start_date, r.end_date, r.status,
+      r.id, r.start_date, r.end_date, r.status, r.created_at,
       u.name AS user_name, u.email,
       v.brand, v.model, v.plate_number
     FROM reservations r
