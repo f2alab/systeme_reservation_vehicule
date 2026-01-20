@@ -1,5 +1,5 @@
-// Impotation des modules nécessaires
-import { getAllVehicles, createVehicle, getVehicleById, updateVehicleStatus, updateVehicleInfo } from '../models/Vehicule.js';
+// Importation des modules nécessaires
+import { getAllVehicles, createVehicle, getVehicleById, updateVehicleStatus, updateVehicleInfo, deleteVehicle } from '../models/Vehicule.js';
 
 export const getAll = async (req, res) => {
   try {
@@ -35,15 +35,15 @@ export const create = async (req, res) => {
       return res.status(400).json({ error: 'Marque, modèle, plaque, couleur, nombre de sièges et type de carburant sont requis.' });
     }
 
-    // Verifier si utilisateur connecté
-    if (!req.user) {
-      return res.status(401).json({ error: 'Authentification requise.' });
-    }
+    // // Verifier si utilisateur connecté
+    // if (!req.user) {
+    //   return res.status(401).json({ error: 'Authentification requise.' });
+    // }
 
-    // Verification des droits administrateur
-    if (!req.user.role || req.user.role !== 'admin') {
-      return res.status(403).json({ error: `Vous n'êtes pas autorisé à ajouter un véhicule.` });
-    }
+    // // Verification des droits administrateur
+    // if (!req.user.role || req.user.role !== 'admin') {
+    //   return res.status(403).json({ error: `Vous n'êtes pas autorisé à ajouter un véhicule.` });
+    // }
 
     // Verification de l'unicité de la plaque d'immatriculation
     const existingVehicle = await getVehicleById(req.app.get('db'), plate_number);
@@ -68,15 +68,15 @@ export const updateStatus = async (req, res) => {
     const { id } = req.params;
     const { status } = req.body;
 
-    // Verifier si utilisateur connecté
-    if (!req.user) {
-      return res.status(401).json({ error: 'Authentification requise.' });
-    }
+    // // Verifier si utilisateur connecté
+    // if (!req.user) {
+    //   return res.status(401).json({ error: 'Authentification requise.' });
+    // }
 
-    // Verification des droits administrateur
-    if (!req.user.role || req.user.role !== 'admin') {
-      return res.status(403).json({ error: `Vous n'êtes pas autorisé à modifier le statut d'un véhicule.` });
-    }
+    // // Verification des droits administrateur
+    // if (!req.user.role || req.user.role !== 'admin') {
+    //   return res.status(403).json({ error: `Vous n'êtes pas autorisé à modifier le statut d'un véhicule.` });
+    // }
 
     const vehicle = await updateVehicleStatus(req.app.get('db'), id, status);
     if (!vehicle) {
@@ -95,14 +95,14 @@ export const updateInfo = async (req, res) => {
     const { id } = req.params;
     const { brand, model, plate_number, color, seats, fuel_type, status } = req.body;
 
-    // Verifier si utilisateur connecté
-    if (!req.user) {
-      return res.status(401).json({ error: 'Authentification requise.' });
-    }
-    // Verification des droits administrateur
-    if (!req.user.role || req.user.role !== 'admin') {
-      return res.status(403).json({ error: `Vous n'êtes pas autorisé à modifier les informations d'un véhicule.` });
-    }
+    // // Verifier si utilisateur connecté
+    // if (!req.user) {
+    //   return res.status(401).json({ error: 'Authentification requise.' });
+    // }
+    // // Verification des droits administrateur
+    // if (!req.user.role || req.user.role !== 'admin') {
+    //   return res.status(403).json({ error: `Vous n'êtes pas autorisé à modifier les informations d'un véhicule.` });
+    // }
     const vehicle = await updateVehicleInfo(req.app.get('db'), id, { brand, model, plate_number, color, seats, fuel_type, status });
     if (!vehicle) {
       return res.status(404).json({ error: 'Véhicule non trouvé.' });
@@ -118,14 +118,14 @@ export const updateInfo = async (req, res) => {
 export const remove = async (req, res) => {
   try {
     const { id } = req.params;
-    // Verifier si utilisateur connecté
-    if (!req.user) {
-      return res.status(401).json({ error: 'Authentification requise.' });
-    }
-    // Verification des droits administrateur
-    if (!req.user.role || req.user.role !== 'admin') {
-      return res.status(403).json({ error: `Vous n'êtes pas autorisé à supprimer un véhicule.` });
-    }
+    // // Verifier si utilisateur connecté
+    // if (!req.user) {
+    //   return res.status(401).json({ error: 'Authentification requise.' });
+    // }
+    // // Verification des droits administrateur
+    // if (!req.user.role || req.user.role !== 'admin') {
+    //   return res.status(403).json({ error: `Vous n'êtes pas autorisé à supprimer un véhicule.` });
+    // }
     const vehicle = await deleteVehicle(req.app.get('db'), id);
     if (!vehicle) {
       return res.status(404).json({ error: 'Véhicule non trouvé.' });

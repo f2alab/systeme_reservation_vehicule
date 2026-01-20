@@ -36,4 +36,11 @@ export const findUserById = async (db, id) => {
 export const updateUserStatus = async (db, id, status) => {
   const stmt = await db.prepare('UPDATE users SET updated_at = CURRENT_TIMESTAMP, status = ? WHERE id = ?');
   return await stmt.run(status, id);
-}
+};
+
+// Mettre à jour le mot de passe de l'utilisateur
+export const updatePasswordUser = async (db, id, hashedPassword) => {
+  const stmt = await db.prepare('UPDATE users SET password = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?');
+  const result = await stmt.run(hashedPassword, id);
+  return result.changes > 0; // Retourne true si une ligne a été modifiée
+};

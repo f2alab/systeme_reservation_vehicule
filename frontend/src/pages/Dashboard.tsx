@@ -1,7 +1,9 @@
 // components/Dashboard.tsx
 import { useState, useEffect } from 'react';
-import type { Reservation, User, Vehicule } from '../types/models';
+import type { User, Vehicule } from '../types/models';
 import { useToast } from '../contexts/ToastContext';
+import { useVehicules } from '../hooks/useVehicules';
+import { useReservations } from '../hooks/useReservations';
 import ReservationModal from '../components/ui/ReservationModal';
 import VehicleModal from '../components/ui/VehicleModal';
 import PasswordModal from '../components/ui/PasswordModal';
@@ -10,81 +12,7 @@ import ReservationCard from '../components/ui/ReservationCard';
 import ConfirmationDialog from '../components/ui/ConfirmationDialog';
 import { Car, ChevronDown, ChevronUp } from 'lucide-react';
 
-// Mock data
-const MOCK_VEHICLES: Vehicule[] = [
-  {
-    id: 1,
-    brand: 'Tesla',
-    model: 'Model 3',
-    plate_number: 'EV-1234',
-    fuel_type: 'electric',
-    color: 'Blanc',
-    seats: 5,
-    status: 'operational',
-    createdAt: '2026-01-25T12:00:00Z',
-    updatedAt: '2026-01-25T12:00:00Z',
-  },
-  {
-    id: 2,
-    brand: 'Toyota',
-    model: 'Prius',
-    plate_number: 'HY-5678',
-    fuel_type: 'hybrid',
-    color: 'Argent',
-    seats: 5,
-    status: 'operational',
-    createdAt: '2026-01-20T12:00:00Z',
-    updatedAt: '2026-01-20T12:00:00Z',
-  },
-  {
-    id: 3,
-    brand: 'Renault',
-    model: 'Clio',
-    plate_number: 'GA-9012',
-    fuel_type: 'gasoline',
-    color: 'Rouge',
-    seats: 4,
-    status: 'operational',
-    createdAt: '2026-01-15T12:00:00Z',
-    updatedAt: '2026-01-15T12:00:00Z',
-  },
-  {
-    id: 4,
-    brand: 'Peugeot',
-    model: '3008',
-    plate_number: 'DI-3456',
-    fuel_type: 'diesel',
-    color: 'Gris',
-    seats: 5,
-    status: 'operational',
-    createdAt: '2026-01-10T12:00:00Z',
-    updatedAt: '2026-01-10T12:00:00Z',
-  },
-];
 
-let mockReservations: Reservation[] = [
-  {
-    id: 101,
-    user_id: 2,
-    vehicule_id: 1,
-    start_date: '2026-02-01T00:00:00Z',
-    end_date: '2026-02-05T00:00:00Z',
-    status: 'confirmed',
-    createdAt: '2026-01-15T12:00:00Z',
-  },
-  {
-    id: 102,
-    user_id: 2,
-    vehicule_id: 2,
-    start_date: '2026-01-20T00:00:00Z',
-    end_date: '2026-01-22T00:00:00Z',
-    status: 'cancelled',
-    createdAt: '2026-01-10T12:00:00Z',
-  },
-];
-
-// Simule la récupération avec délai
-const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
 interface DashboardProps {
   user: User;
@@ -92,9 +20,24 @@ interface DashboardProps {
 }
 
 export default function Dashboard({ user, onLogout }: DashboardProps) {
-  const [vehicles, setVehicles] = useState<Vehicule[]>([]);
-  const [reservations, setReservations] = useState<Reservation[]>([]);
-  const [loading, setLoading] = useState(true);
+  const {
+    vehicules: vehicles,
+    loading: vehiclesLoading,
+    createNewVehicule,
+    updateVehiculeInfo,
+    removeVehicule  } = useVehicules();
+
+  const {
+    reservations,
+    loading: reservationsLoading,
+    error: reservationsError,
+    loadUserReservations,
+    loadAllReservations,
+    createNewReservation,
+    cancelUserReservation,
+    clearError: clearReservationsError
+  } = useReservations();
+
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicule | null>(null);
   const [showReservationModal, setShowReservationModal] = useState(false);
   const [showVehicleModal, setShowVehicleModal] = useState(false);
@@ -108,37 +51,15 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
   const [showCancelConfirmDialog, setShowCancelConfirmDialog] = useState(false);
   const [cancelReservationId, setCancelReservationId] = useState<number | null>(null);
   const [showLogoutConfirmDialog, setShowLogoutConfirmDialog] = useState(false);
+  const [showDeleteVehicleConfirmDialog, setShowDeleteVehicleConfirmDialog] = useState(false);
+  const [deleteVehicleData, setDeleteVehicleData] = useState<Vehicule | null>(null);
+  const [showPasswordConfirmDialog, setShowPasswordConfirmDialog] = useState(false);
   const [isVehicleSearchExpanded, setIsVehicleSearchExpanded] = useState(false);
   const [isVehicleStatsExpanded, setIsVehicleStatsExpanded] = useState(false);
   const [isReservationSearchExpanded, setIsReservationSearchExpanded] = useState(false);
   const [isReservationStatsExpanded, setIsReservationStatsExpanded] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const { showToast } = useToast();
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      await Promise.all([fetchVehicles(), fetchReservations()]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchVehicles = async () => {
-    await delay(400);
-    setVehicles(MOCK_VEHICLES);
-  };
-
-  const fetchReservations = async () => {
-    await delay(400);
-    // For admins, show all reservations; for users, show only their own
-    const allReservations = isAdmin ? mockReservations : mockReservations.filter((r) => r.user_id === user.id);
-    setReservations(allReservations);
-  };
 
   const handleReserve = (vehicle: Vehicule) => {
     setSelectedVehicle(vehicle);
@@ -148,24 +69,20 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
   const handleReservationSubmit = async (startDate: string, endDate: string) => {
     if (!selectedVehicle) return;
 
-    await delay(500);
-
-    const newId = Math.max(0, ...mockReservations.map((r) => r.id)) + 1;
-    const newReservation: Reservation = {
-      id: newId,
-      user_id: user.id,
-      vehicule_id: selectedVehicle.id,
+    const result = await createNewReservation({
+      vehicle_id: selectedVehicle.id,
       start_date: startDate,
-      end_date: endDate,
-      status: 'confirmed',
-      createdAt: new Date().toISOString(),
-    };
+      end_date: endDate
+    });
 
-    mockReservations.push(newReservation);
-    showToast('Réservation créée avec succès !', 'success');
-    setShowReservationModal(false);
-    setSelectedVehicle(null);
-    fetchReservations();
+    if (result.reservation) {
+      showToast('Réservation créée avec succès !', 'success');
+      setShowReservationModal(false);
+      setSelectedVehicle(null);
+    } else {
+      // Show the actual error message from the result
+      showToast(result.error || 'Erreur lors de la création de la réservation', 'error');
+    }
   };
 
   const handleCancelReservation = (reservationId: number) => {
@@ -176,17 +93,17 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
   const confirmCancelReservation = async () => {
     if (!cancelReservationId) return;
 
+    const success = await cancelUserReservation(cancelReservationId.toString());
     setShowCancelConfirmDialog(false);
 
-    await delay(300);
+    if (success) {
+      showToast('Réservation annulée avec succès !', 'success');
+    } else {
+      showToast(reservationsError || 'Erreur lors de l\'annulation de la réservation', 'error');
+      clearReservationsError(); // Clear the error after showing it
+    }
 
-    mockReservations = mockReservations.map((r) =>
-      r.id === cancelReservationId ? { ...r, status: 'cancelled' } : r
-    );
-
-    showToast('Réservation annulée avec succès !', 'success');
     setCancelReservationId(null);
-    fetchReservations();
   };
 
   const handleEditVehicle = (vehicle: Vehicule) => {
@@ -200,49 +117,70 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
   };
 
   const handleVehicleSubmit = async (vehicleData: Omit<Vehicule, 'id' | 'createdAt' | 'updatedAt'>) => {
-    await delay(500);
-
     if (editingVehicle) {
       // Edit mode
-      const updatedVehicle: Vehicule = {
-        ...editingVehicle,
-        ...vehicleData,
-        updatedAt: new Date().toISOString(),
-      };
-
-      // Update in mock data
-      const index = MOCK_VEHICLES.findIndex(v => v.id === editingVehicle.id);
-      if (index !== -1) {
-        MOCK_VEHICLES[index] = updatedVehicle;
+      const success = await updateVehiculeInfo(editingVehicle.id.toString(), vehicleData);
+      if (success) {
+        showToast('Véhicule modifié avec succès !', 'success');
+      } else {
+        showToast('Erreur lors de la modification du véhicule', 'error');
       }
-
-      showToast('Véhicule modifié avec succès !', 'success');
     } else {
       // Add mode
-      const newId = Math.max(0, ...MOCK_VEHICLES.map(v => v.id)) + 1;
-      const newVehicle: Vehicule = {
-        ...vehicleData,
-        id: newId,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-
-      MOCK_VEHICLES.push(newVehicle);
-      showToast('Véhicule ajouté avec succès !', 'success');
+      const newVehicle = await createNewVehicule(vehicleData);
+      if (newVehicle) {
+        showToast('Véhicule ajouté avec succès !', 'success');
+      } else {
+        showToast('Erreur lors de l\'ajout du véhicule', 'error');
+      }
     }
 
     setShowVehicleModal(false);
     setEditingVehicle(null);
-    fetchVehicles();
+  };
+
+  const handleDeleteVehicle = (vehicle: Vehicule) => {
+    setDeleteVehicleData(vehicle);
+    setShowDeleteVehicleConfirmDialog(true);
+  };
+
+  const confirmDeleteVehicle = async () => {
+    if (!deleteVehicleData) return;
+
+    const success = await removeVehicule(deleteVehicleData.id.toString());
+    setShowDeleteVehicleConfirmDialog(false);
+
+    if (success) {
+      showToast('Véhicule supprimé avec succès !', 'success');
+    } else {
+      showToast('Erreur lors de la suppression du véhicule', 'error');
+    }
+
+    setDeleteVehicleData(null);
+  };
+
+  const confirmPasswordChange = () => {
+    setShowPasswordConfirmDialog(false);
+    setShowPasswordModal(true);
   };
 
   const handlePasswordSubmit = async (newPassword: string) => {
-    await delay(500);
+    try {
+      // Import authService here to avoid circular imports
+      const { authService } = await import('../services/auth.service');
 
-    // In a real app, this would update the user's password in the backend
-    // For now, we'll just simulate the update
-    showToast('Mot de passe modifié avec succès !', 'success');
-    setShowPasswordModal(false);
+      await authService.updatePassword(newPassword);
+      showToast('Mot de passe modifié avec succès ! Vous allez être déconnecté.', 'success');
+      setShowPasswordModal(false);
+
+      // Automatically logout after successful password change
+      setTimeout(() => {
+        onLogout();
+      }, 2000); // Give user time to see the success message
+    } catch (error: any) {
+      console.error('Password update error:', error);
+      showToast(error.response?.data?.error || 'Erreur lors de la modification du mot de passe', 'error');
+    }
   };
 
   // Filtering functions
@@ -285,8 +223,20 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
   };
 
   const isAdmin = user.role === 'admin';
-  
-  if (loading) {
+
+  // Charger les réservations selon le rôle utilisateur et l'onglet actif
+  useEffect(() => {
+    if (activeTab === 'reservations') {
+      if (isAdmin) {
+        loadAllReservations();
+      } else {
+        loadUserReservations();
+      }
+    }
+  }, [activeTab, isAdmin, loadAllReservations, loadUserReservations]);
+
+  // Chargement initial - attendre que les données soient chargées
+  if (vehiclesLoading || reservationsLoading) {
     return (
       <div className="min-h-screen bg-linear-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center">
         <div className="text-center">
@@ -309,12 +259,13 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
               d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
             />
           </svg>
-          <p className="text-gray-500">Chargement...</p>
+          <p className="text-gray-500">Chargement des données...</p>
         </div>
       </div>
     );
   }
 
+  // Contenu
   return (
     <div className="h-screen bg-linear-to-br from-blue-50 via-white to-blue-50 flex flex-col">
       {/* Header */}
@@ -392,6 +343,21 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
         {/* Vehicules Tab */}
         {activeTab === 'vehicles' && (
           <>
+            {/* Bouton Ajouter véhicule - visible seulement pour les admins */}
+            {isAdmin && (
+              <div className="mb-6 flex justify-end">
+                <button
+                  onClick={handleAddVehicle}
+                  className="px-6 py-3 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-lg transition flex items-center gap-2"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Ajouter un véhicule
+                </button>
+              </div>
+            )}
+
             {/* Recherche et filtrage */}
             <div className="bg-white border border-gray-300 rounded-lg mb-6">
               <button
@@ -463,17 +429,6 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
                     >
                       Réinitialiser
                     </button>
-                    {isAdmin && (
-                      <button
-                        onClick={handleAddVehicle}
-                        className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-lg transition flex items-center gap-2"
-                      >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                        </svg>
-                        Ajouter
-                      </button>
-                    )}
                   </div>
                 </div>
               </div>
@@ -533,6 +488,7 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
                   onReserve={handleReserve}
                   isAdmin={isAdmin}
                   onEdit={handleEditVehicle}
+                  onDelete={handleDeleteVehicle}
                 />
               ))}
             </div>
@@ -827,6 +783,33 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
         onConfirm={onLogout}
         onCancel={() => setShowLogoutConfirmDialog(false)}
         variant="destructive"
+      />
+
+      {/* Delete Vehicle Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={showDeleteVehicleConfirmDialog}
+        title="Supprimer le véhicule"
+        message={`Êtes-vous sûr de vouloir supprimer le véhicule "${deleteVehicleData?.brand} ${deleteVehicleData?.model}" (${deleteVehicleData?.plate_number}) ? Cette action est irréversible et supprimera également toutes les réservations associées à ce véhicule.`}
+        confirmText="Supprimer"
+        cancelText="Annuler"
+        onConfirm={confirmDeleteVehicle}
+        onCancel={() => {
+          setShowDeleteVehicleConfirmDialog(false);
+          setDeleteVehicleData(null);
+        }}
+        variant="destructive"
+      />
+
+      {/* Password Change Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={showPasswordConfirmDialog}
+        title="Confirmer le changement de mot de passe"
+        message="Êtes-vous sûr de vouloir modifier votre mot de passe ? Vous serez automatiquement déconnecté après le changement."
+        confirmText="Continuer"
+        cancelText="Annuler"
+        onConfirm={confirmPasswordChange}
+        onCancel={() => setShowPasswordConfirmDialog(false)}
+        variant="primary"
       />
 
       {/* Password Modal */}

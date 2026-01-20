@@ -1,7 +1,7 @@
 // Impotation des modules nécessaires
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { findUserByEmail, createUser, updateUserStatus } from '../models/User.js';
+import { findUserByEmail, createUser, updateUserStatus, updatePasswordUser } from '../models/User.js';
 
 // Clé secrète JWT
 const JWT_SECRET = process.env.JWT_SECRET || 'togo-data-lab-reservation-secret';
@@ -71,7 +71,9 @@ export const login = async (req, res) => {
         id: user.id,
         name: user.name,
         email: user.email,
-        role: user.role
+        role: user.role,
+        createdAt: user.created_at,
+        updatedAt: user.updated_at
       }
     });
   } catch (error) {

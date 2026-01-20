@@ -1,62 +1,32 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../contexts/ToastContext';
-import type { User } from '../types/models';
+import { useAuth } from '../contexts/AuthContext';
 import TextField from '../components/ui/TextField';
 import Button from '../components/ui/Button';
 import LogoHeader from '../components/ui/LogoHeader';
 
-interface LoginProps {
-    onLoginSuccess: (user: User) => void;
-}
-
-export default function Login({ onLoginSuccess }: LoginProps) {
+export default function Login() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const { showToast } = useToast();
+    const { login } = useAuth();
     const navigate = useNavigate();
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
 
-        // Simule un délai
-        setTimeout(() => {
-            const mockUsers = [
-                { email: 'admin@example.com', password: 'admin123', role: 'admin' },
-                { email: 'user@example.com', password: 'user123', role: 'user' },
-            ];
-
-            const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
-
-            const validUsers = [...mockUsers, ...registeredUsers];
-
-            const user = validUsers.find(
-                (u: any) => u.email === email && u.password === password
-            );
-
-            if (user) {
-                showToast('Connexion réussie !', 'success');
-                const loggedInUser: User = {
-                    id: (user as any).id || (email === 'admin@example.com' ? 1 : 2),
-                    name: (user as any).name || (email.startsWith('admin') ? 'Admin User' : 'Regular User'),
-                    email,
-                    password,
-                    role: user.role,
-                    status: 'active',
-                    createdAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString(),
-                };
-                onLoginSuccess(loggedInUser);
-                localStorage.setItem('currentUser', JSON.stringify(loggedInUser));
-                navigate('/dashboard');
-            } else {
-                showToast('Email ou mot de passe incorrect.', 'error');
-            }
-
+        try {
+            await login(email, password);
+            showToast('Connexion réussie !', 'success');
+            navigate('/dashboard');
+        } catch (error: any) {
+            showToast(error.message || 'Email ou mot de passe incorrect.', 'error');
+        } finally {
             setLoading(false);
-        }, 600);
+        }
     };
 
 

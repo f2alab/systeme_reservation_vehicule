@@ -1,24 +1,22 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../contexts/ToastContext';
-import type { User } from '../types/models';
+import { useAuth } from '../contexts/AuthContext';
 import TextField from '../components/ui/TextField';
 import Button from '../components/ui/Button';
 import LogoHeader from '../components/ui/LogoHeader';
 import ConfirmationDialog from '../components/ui/ConfirmationDialog';
 
-interface RegisterProps {
-    onRegisterSuccess: () => void;
-}
-
-export default function Register({ onRegisterSuccess }: RegisterProps) {
+export default function Register() {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+
     const [loading, setLoading] = useState(false);
     const [showConfirmDialog, setShowConfirmDialog] = useState(false);
     const { showToast } = useToast();
+    const { register } = useAuth();
     const navigate = useNavigate();
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -50,36 +48,15 @@ export default function Register({ onRegisterSuccess }: RegisterProps) {
         setShowConfirmDialog(false);
         setLoading(true);
 
-        // Simule un délai
-        setTimeout(() => {
-            // Check if email already exists
-            const existingUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
-            if (existingUsers.find((u: any) => u.email === email)) {
-                showToast('Cet email est déjà utilisé.', 'error');
-                setLoading(false);
-                return;
-            }
-
-            const newUser: User = {
-                id: Date.now(), // Simple ID generation
-                name: name.trim(),
-                email: email.trim(),
-                password,
-                role: 'user',
-                status: 'active',
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-            };
-
-            // Save to localStorage
-            existingUsers.push(newUser);
-            localStorage.setItem('registeredUsers', JSON.stringify(existingUsers));
-
+        try {
+            await register(name.trim(), email.trim(), password, 'user');
             showToast('Inscription réussie ! Vous pouvez maintenant vous connecter.', 'success');
-            onRegisterSuccess();
             navigate('/login');
+        } catch (error: any) {
+            showToast(error.message || 'Erreur lors de l\'inscription.', 'error');
+        } finally {
             setLoading(false);
-        }, 600);
+        }
     };
 
     return (
@@ -130,6 +107,8 @@ export default function Register({ onRegisterSuccess }: RegisterProps) {
                             disabled={loading}
                             showPasswordToggle
                         />
+
+
 
                         <Button type="submit" loading={loading} disabled={loading} loadingText='Inscription...'>
                             S'inscrire

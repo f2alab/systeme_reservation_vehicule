@@ -7,7 +7,7 @@ import { createDefaultUser } from '../models/User.js';
 import { createDefaultVehicles } from '../models/Vehicule.js';
 
 
-const DB_FILE_PATH = process.env.DB_PATH || './data/database.sqlite';
+const DB_FILE_PATH = process.env.DB_FILE_PATH || './data/database.sqlite';
 
 // Chemin vers la base de données
 const __filename = fileURLToPath(import.meta.url);
@@ -37,24 +37,24 @@ const createTables = async (db) => {
       model TEXT NOT NULL,
       plate_number TEXT UNIQUE NOT NULL,
       color TEXT NOT NULL,
-      seats INTEGER DEFAULT 5 ,
+      seats INTEGER DEFAULT 5,
       fuel_type TEXT CHECK(fuel_type IN ('gasoline', 'diesel', 'electric', 'hybrid')) DEFAULT 'gasoline',
-      status TEXT CHECK(status IN ('operational', 'maintenance')) DEFAULT 'operational'
+      status TEXT CHECK(status IN ('operational', 'maintenance')) DEFAULT 'operational',
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
 
     -- Table reservations
     CREATE TABLE IF NOT EXISTS reservations (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       user_id INTEGER NOT NULL,
-      vehicle_id INTEGER NOT NULL,
+      vehicule_id INTEGER NOT NULL,
       start_date DATETIME NOT NULL,
       end_date DATETIME NOT NULL,
       status TEXT CHECK(status IN ('confirmed', 'cancelled')) DEFAULT 'confirmed',
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-      FOREIGN KEY (vehicle_id) REFERENCES vehicules(id) ON DELETE CASCADE,
+      FOREIGN KEY (vehicule_id) REFERENCES vehicules(id) ON DELETE CASCADE,
       CHECK (end_date > start_date)
     );
   `);

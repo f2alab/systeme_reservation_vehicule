@@ -2,8 +2,9 @@
 import {
   createReservation,
   findOverlappingReservations,
-  getReservationsWithUserId
-} from '../models/Reservation.js'; 
+  getReservationsWithUserId,
+  cancelReservation
+} from '../models/Reservation.js';
 
 // Fonction utilitaire pour valider les dates
 const isValidDate = (dateStr) => !isNaN(Date.parse(dateStr));
@@ -68,6 +69,28 @@ export const getUserReservations = async (req, res) => {
   } catch (error) {
     console.error('Erreur historique réservations:', error);
     res.status(500).json({ error: 'Impossible de charger vos réservations.' });
+  }
+};
+
+export const cancel = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user_id = req.user?.id;
+
+    if (!user_id) {
+      return res.status(401).json({ error: 'Authentification requise.' });
+    }
+
+    const success = await cancelReservation(req.app.get('db'), id, user_id);
+
+    if (!success) {
+      return res.status(404).json({ error: 'Réservation non trouvée ou déjà annulée.' });
+    }
+
+    res.json({ message: 'Réservation annulée avec succès.' });
+  } catch (error) {
+    console.error('Erreur annulation réservation:', error);
+    res.status(500).json({ error: 'Impossible d\'annuler la réservation.' });
   }
 };
 

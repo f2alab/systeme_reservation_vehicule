@@ -1,64 +1,55 @@
-import { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import Dashboard from "./pages/DashBoard";
+import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
-import type { User } from "./types/models";
 import { ToastProvider } from "./contexts/ToastContext";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
 
-function App() {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+function AppRoutes() {
+  const { isAuthenticated, user, logout, loading } = useAuth();
 
-  useEffect(() => {
-    // Check if user is logged in on app start
-    const savedUser = localStorage.getItem('currentUser');
-    if (savedUser) {
-      setCurrentUser(JSON.parse(savedUser));
-    }
-  }, []);
-
-  const handleLoginSuccess = (user: User) => {
-    setCurrentUser(user);
-  };
-
-  const handleRegisterSuccess = () => {
-    // Registration successful, stay on register page or navigate to login
-  };
-
-  const handleLogout = () => {
-    setCurrentUser(null);
-    localStorage.removeItem('currentUser');
-  };
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Chargement...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <ToastProvider>
-      <BrowserRouter>
-      <Routes>
-        <Route
-          path="/login"
-          element={
-            currentUser ? <Navigate to="/dashboard" replace /> : <Login onLoginSuccess={handleLoginSuccess} />
-          }
-        />
-        <Route
-          path="/register"
-          element={
-            currentUser ? <Navigate to="/dashboard" replace /> : <Register onRegisterSuccess={handleRegisterSuccess} />
-          }
-        />
-        <Route
-          path="/dashboard"
-          element={
-            currentUser ? <Dashboard user={currentUser} onLogout={handleLogout} /> : <Navigate to="/login" replace />
-          }
-        />
-        <Route path="/" element={<Navigate to="/login" replace />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </BrowserRouter>
-    </ToastProvider>
-  )
+    <Routes>
+      <Route
+        path="/login"
+        element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />}
+      />
+      <Route
+        path="/register"
+        element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Register />}
+      />
+      <Route
+        path="/dashboard"
+        element={isAuthenticated && user ? <Dashboard user={user} onLogout={logout} /> : <Navigate to="/login" replace />}
+      />
+      <Route path="/" element={<Navigate to="/login" replace />} />
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <ToastProvider>
+        <BrowserRouter>
+          <AppRoutes />
+        </BrowserRouter>
+      </ToastProvider>
+    </AuthProvider>
+  );
 }
 
 export default App

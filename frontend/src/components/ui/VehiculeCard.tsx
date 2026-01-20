@@ -1,15 +1,16 @@
 import React from 'react';
 import type { Vehicule } from '../../types/models';
-import { CarFront, Edit } from 'lucide-react';
+import { CarFront, Edit, Trash2 } from 'lucide-react';
 
 interface VehicleCardProps {
     vehicle: Vehicule;
     onReserve: (vehicle: Vehicule) => void;
     isAdmin: boolean;
     onEdit: (vehicle: Vehicule) => void;
+    onDelete: (vehicle: Vehicule) => void;
 }
 
-const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onReserve, isAdmin, onEdit }) => {
+const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onReserve, isAdmin, onEdit, onDelete }) => {
     const translateFuelType = (fuelType: string) => {
         switch (fuelType) {
             case 'electric':
@@ -101,13 +102,22 @@ const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onReserve, isAdmin, 
                     </div>
                 </div>
                 {isAdmin ? (
-                    <button
-                        onClick={() => onEdit(vehicle)}
-                        className="w-full bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200 font-semibold py-2 rounded-lg transition flex items-center justify-center gap-2"
-                    >
-                        <Edit className="w-4 h-4" />
-                        Modifier le Véhicule
-                    </button>
+                    <div className="flex gap-2">
+                        <button
+                            onClick={() => onEdit(vehicle)}
+                            className="flex-1 bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200 font-semibold py-2 rounded-lg transition flex items-center justify-center gap-2"
+                        >
+                            <Edit className="w-4 h-4" />
+                            Modifier
+                        </button>
+                        <button
+                            onClick={() => onDelete(vehicle)}
+                            className="flex-1 bg-red-100 text-red-700 border border-red-300 hover:bg-red-200 font-semibold py-2 rounded-lg transition flex items-center justify-center gap-2"
+                        >
+                            <Trash2 className="w-4 h-4" />
+                            Supprimer
+                        </button>
+                    </div>
                 ) : (
                     <button
                         onClick={() => onReserve(vehicle)}

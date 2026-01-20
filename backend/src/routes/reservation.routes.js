@@ -9,6 +9,7 @@ const reservationRoutes = Router();
 // Toutes les routes de réservation nécessitent une authentification
 reservationRoutes.post('/create', authMiddleware, reservationController.create);
 reservationRoutes.get('/user', authMiddleware, reservationController.getUserReservations);
+reservationRoutes.put('/cancel/:id', authMiddleware, reservationController.cancel);
 // recupérer toutes les réservations (pour admin, par exemple)
 reservationRoutes.get('/all', authMiddleware, adminMiddleware, reservationController.getAllReservationsWithDetails);
 

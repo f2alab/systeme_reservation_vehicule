@@ -8,8 +8,8 @@ import { createServer } from 'http';
 import app from './src/app.js';
 import initDb from './src/config/database.js';
 
-
-const PORT = process.env.PORT;
+console.log('All env vars:', process.env);
+const PORT = process.env.PORT || 3001;
 console.log(`Port défini sur : ${PORT}`);
 
 // Initialiser la base de données puis démarrer le serveur
