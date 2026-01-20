@@ -126,12 +126,12 @@ _Développée par Ama-Edi Fabien Agouzou dans le cadre du processus de recruteme
 4. **Accéder à l'Application** :
    Ouvrez votre navigateur et allez sur `http://localhost:3000`.
 
-### Connexion Administrateur
+### Données Initiales pour la Base de Données
+
+#### Compte Administrateur
 
 - **Email** : <admin@admin.tg>
 
 - **Mot de Passe** : superadmin
-
-### Base de Données
 
 La base de données SQLite est créée automatiquement au premier lancement dans `backend/data/database.sqlite`. Des données de test (utilisateur admin et véhicules par défaut) sont insérées automatiquement.
