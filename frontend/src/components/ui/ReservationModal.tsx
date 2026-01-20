@@ -64,7 +64,7 @@ export default function ReservationModal({
     <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4 z-50">
       <div className="bg-white border border-gray-300 rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] p-6 flex flex-col">
         {/* Header */}
-        <div className="flex items-start justify-between mb-6 flex-shrink-0">
+        <div className="flex items-start justify-between mb-6 shrink-0">
           <div>
             <h2 className="text-2xl font-bold text-gray-900">Réserver un Véhicule</h2>
             <p className="text-gray-500 text-sm">
@@ -73,7 +73,7 @@ export default function ReservationModal({
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition flex-shrink-0"
+            className="text-gray-400 hover:text-gray-600 transition shrink-0"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path

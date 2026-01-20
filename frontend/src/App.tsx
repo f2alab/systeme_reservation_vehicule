@@ -1,8 +1,9 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import Dashboard from "./pages/Dashboard";
+import DashBoard from "./pages/DashBoard";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
+import Splash from "./pages/Splash";
 import { ToastProvider } from "./contexts/ToastContext";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 
@@ -32,8 +33,9 @@ function AppRoutes() {
       />
       <Route
         path="/dashboard"
-        element={isAuthenticated && user ? <Dashboard user={user} onLogout={logout} /> : <Navigate to="/login" replace />}
+        element={isAuthenticated && user ? <DashBoard user={user} onLogout={logout} /> : <Navigate to="/login" replace />}
       />
+      <Route path="/splash" element={<Splash />} />
       <Route path="/" element={<Navigate to="/login" replace />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
