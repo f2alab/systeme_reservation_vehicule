@@ -1,13 +1,15 @@
 import React from 'react';
+import { X } from 'lucide-react';
 import type { Reservation, Vehicule } from '../../types/models';
 
 interface ReservationCardProps {
     reservation: Reservation;
     vehicle: Vehicule;
     onCancel: (reservationId: number) => void;
+    user?: { name: string; email: string };
 }
 
-const ReservationCard: React.FC<ReservationCardProps> = ({ reservation, vehicle, onCancel }) => {
+const ReservationCard: React.FC<ReservationCardProps> = ({ reservation, vehicle, onCancel, user }) => {
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString('fr-FR', {
             year: 'numeric',
@@ -24,6 +26,11 @@ const ReservationCard: React.FC<ReservationCardProps> = ({ reservation, vehicle,
                         {vehicle.brand} {vehicle.model}
                     </h3>
                     <p className="text-sm text-gray-500">{vehicle.plate_number}</p>
+                    {user && (
+                        <p className="text-sm text-blue-600 font-medium mt-1">
+                            Réservé par: {user.name}
+                        </p>
+                    )}
                 </div>
                 <span
                     className={`px-3 py-1 rounded-full text-xs font-semibold capitalize ${
@@ -58,7 +65,7 @@ const ReservationCard: React.FC<ReservationCardProps> = ({ reservation, vehicle,
                     onClick={() => onCancel(reservation.id)}
                     className="px-4 py-2 bg-red-100 text-red-600 border border-red-300 rounded-lg hover:bg-red-200 transition"
                 >
-                    Annuler la Réservation
+                    <X className="w-4 h-4 mr-2 inline" /> Annuler la Réservation
                 </button>
             )}
         </div>

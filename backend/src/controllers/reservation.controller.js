@@ -2,10 +2,12 @@
 import {
   createReservation,
   findOverlappingReservations,
+  findUserOverlappingReservations,
   getReservationsWithUserId,
   cancelReservation,
   getReservationsWithDetails
 } from '../models/Reservation.js';
+import { findUserById } from '../models/User.js';
 
 // Fonction utilitaire pour valider les dates
 const isValidDate = (dateStr) => !isNaN(Date.parse(dateStr));
@@ -18,6 +20,28 @@ export const create = async (req, res) => {
 
     if (!user_id) {
       return res.status(401).json({ error: 'Authentification requise.' });
+    }
+
+    // Vérifier le statut de l'utilisateur
+    const user = await findUserById(req.app.get('db'), user_id);
+    if (!user) {
+      return res.status(404).json({ error: 'Utilisateur non trouvé.' });
+    }
+
+    if (user.status !== 'active') {
+      return res.status(403).json({ error: 'Votre compte est inactif. Vous ne pouvez pas effectuer de réservations.' });
+    }
+
+    // Vérifier si l'utilisateur a déjà une réservation qui chevauche ces dates
+    const userConflict = await findUserOverlappingReservations(
+      req.app.get('db'),
+      user_id,
+      start_date,
+      end_date
+    );
+
+    if (userConflict) {
+      return res.status(409).json({ error: 'Vous avez déjà une réservation en cours qui chevauche ces dates.' });
     }
 
     if (!vehicle_id || !start_date || !end_date) {

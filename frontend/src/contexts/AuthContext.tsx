@@ -52,7 +52,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         email: response.user.email,
         password: '',
         role: response.user.role as 'admin' | 'user',
-        status: 'active',
+        status: response.user.status as 'active' | 'inactive',
         createdAt: response.user.createdAt,
         updatedAt: response.user.updatedAt,
       };

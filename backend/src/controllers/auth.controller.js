@@ -1,7 +1,7 @@
 // Impotation des modules nécessaires
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { findUserByEmail, createUser, updateUserStatus, updatePasswordUser, getAllUsers } from '../models/User.js';
+import { findUserByEmail, findUserById, createUser, updateUserStatus, updatePasswordUser, getAllUsers } from '../models/User.js';
 
 // Clé secrète JWT
 const JWT_SECRET = process.env.JWT_SECRET || 'togo-data-lab-reservation-secret';
@@ -72,6 +72,7 @@ export const login = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        status: user.status,
         createdAt: user.created_at,
         updatedAt: user.updated_at
       }
@@ -87,9 +88,11 @@ export const getMe = async (req, res) => {
   try {
     const userId = req.user.id; // Récupérer l'ID utilisateur depuis le token décodé
     const user = await findUserById(req.app.get('db'), userId);
+    console.log('getMe - User data from database:', user);
     if (!user) {
       return res.status(404).json({ error: 'Utilisateur non trouvé.' });
     }
+    console.log('getMe - Sending user data:', user);
     res.json(user);
   } catch (error) {
     console.error('Erreur obtenir utilisateur:', error);

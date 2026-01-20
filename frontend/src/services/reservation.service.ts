@@ -48,5 +48,30 @@ export const cancelReservation = async (reservationId: string): Promise<{ messag
 // Récupérer toutes les réservations avec détails (admin seulement)
 export const getAllReservationsWithDetails = async (): Promise<ReservationWithDetails[]> => {
   const response = await axios.get(`${API_BASE_URL}${API_ENDPOINTS.RESERVATIONS.GET_ALL}`);
-  return response.data;
+
+  // Transformer les données pour correspondre à la structure attendue
+  return response.data.map((reservation: any) => ({
+    id: reservation.id,
+    user_id: reservation.user_id,
+    vehicule_id: reservation.vehicule_id,
+    start_date: reservation.start_date,
+    end_date: reservation.end_date,
+    status: reservation.status,
+    createdAt: reservation.created_at,
+    user: {
+      id: reservation.user_id,
+      name: reservation.user_name,
+      email: reservation.email
+    },
+    vehicule: {
+      id: reservation.vehicule_id,
+      brand: reservation.brand,
+      model: reservation.model,
+      plate_number: reservation.plate_number,
+      color: reservation.color,
+      seats: reservation.seats,
+      fuel_type: reservation.fuel_type,
+      status: reservation.vehicle_status
+    }
+  }));
 };

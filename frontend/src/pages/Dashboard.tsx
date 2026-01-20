@@ -249,9 +249,10 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
       if (activeTab === 'profile') {
         try {
           const { authService } = await import('../services/auth.service');
-          const token = localStorage.getItem('token');
+          const token = localStorage.getItem('authToken');
           if (token) {
             const userData = await authService.getCurrentUser(token);
+            console.log('Current user data:', userData);
             setCurrentUser(userData);
           }
         } catch (error) {
@@ -663,6 +664,7 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
                       reservation={reservation}
                       vehicle={vehicle}
                       onCancel={handleCancelReservation}
+                      user={reservation.user}
                     />
                   ) : null;
                 })

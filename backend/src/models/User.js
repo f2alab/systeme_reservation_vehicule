@@ -18,6 +18,9 @@ export const createDefaultUser = async (db) => {
   const existingUser = await findUserByEmail(db, defaultEmail);
   if (!existingUser) {
     await createUser(db, { name, email: defaultEmail, password: defaultPassword, role });
+  } else if (!existingUser.status) {
+    // Update existing user if status is missing
+    await updateUserStatus(db, existingUser.id, 'active');
   }
 };
 // Trouver un utilisateur par email
@@ -28,7 +31,7 @@ export const findUserByEmail = async (db, email) => {
 
 // Trouver un utilisateur par ID
 export const findUserById = async (db, id) => {
-  const stmt = await db.prepare('SELECT id, name, email, role FROM users WHERE id = ?');
+  const stmt = await db.prepare('SELECT id, name, email, role, status FROM users WHERE id = ?');
   return await stmt.get(id);
 };
 

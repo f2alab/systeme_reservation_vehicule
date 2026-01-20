@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import type { User } from '../../types/models';
-import { User as UserIcon } from 'lucide-react';
+import { User as UserIcon, UserX } from 'lucide-react';
 import ConfirmationDialog from './ConfirmationDialog';
 
 interface UserCardProps {
@@ -83,7 +83,11 @@ const UserCard: React.FC<UserCardProps> = ({ user, onStatusChange }) => {
                                     : 'bg-green-500 hover:bg-green-600 text-white'
                             }`}
                         >
-                            {user.status === 'active' ? 'Désactiver' : 'Activer'}
+                            {user.status === 'active' ? (
+                                <><UserX className="w-4 h-4 mr-2 inline" /> Désactiver</>
+                            ) : (
+                                'Activer'
+                            )}
                         </button>
                     </div>
                 </div>
