@@ -37,6 +37,8 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
     loadAllReservations,
     createNewReservation,
     cancelUserReservation,
+    approveUserReservation,
+    disapproveUserReservation,
     clearError: clearReservationsError
   } = useReservations();
 
@@ -57,6 +59,10 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
   const [reservationStatusFilter, setReservationStatusFilter] = useState<string>('all');
   const [showCancelConfirmDialog, setShowCancelConfirmDialog] = useState(false);
   const [cancelReservationId, setCancelReservationId] = useState<number | null>(null);
+  const [showApproveConfirmDialog, setShowApproveConfirmDialog] = useState(false);
+  const [approveReservationId, setApproveReservationId] = useState<number | null>(null);
+  const [showDisapproveConfirmDialog, setShowDisapproveConfirmDialog] = useState(false);
+  const [disapproveReservationId, setDisapproveReservationId] = useState<number | null>(null);
   const [showLogoutConfirmDialog, setShowLogoutConfirmDialog] = useState(false);
   const [showDeleteVehicleConfirmDialog, setShowDeleteVehicleConfirmDialog] = useState(false);
   const [deleteVehicleData, setDeleteVehicleData] = useState<Vehicule | null>(null);
@@ -74,13 +80,14 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
     setShowReservationModal(true);
   };
 
-  const handleReservationSubmit = async (startDate: string, endDate: string) => {
+  const handleReservationSubmit = async (startDate: string, endDate: string, motif: string) => {
     if (!selectedVehicle) return;
 
     const result = await createNewReservation({
       vehicle_id: selectedVehicle.id,
       start_date: startDate,
-      end_date: endDate
+      end_date: endDate,
+      motif
     });
 
     if (result.reservation) {
@@ -112,6 +119,48 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
     }
 
     setCancelReservationId(null);
+  };
+
+  const handleApproveReservation = (reservationId: number) => {
+    setApproveReservationId(reservationId);
+    setShowApproveConfirmDialog(true);
+  };
+
+  const handleDisapproveReservation = (reservationId: number) => {
+    setDisapproveReservationId(reservationId);
+    setShowDisapproveConfirmDialog(true);
+  };
+
+  const confirmApproveReservation = async () => {
+    if (!approveReservationId) return;
+
+    const success = await approveUserReservation(approveReservationId.toString());
+    setShowApproveConfirmDialog(false);
+
+    if (success) {
+      showToast('Réservation approuvée avec succès !', 'success');
+    } else {
+      showToast(reservationsError || 'Erreur lors de l\'approbation de la réservation', 'error');
+      clearReservationsError();
+    }
+
+    setApproveReservationId(null);
+  };
+
+  const confirmDisapproveReservation = async () => {
+    if (!disapproveReservationId) return;
+
+    const success = await disapproveUserReservation(disapproveReservationId.toString());
+    setShowDisapproveConfirmDialog(false);
+
+    if (success) {
+      showToast('Réservation désapprouvée avec succès !', 'success');
+    } else {
+      showToast(reservationsError || 'Erreur lors de la désapprobation de la réservation', 'error');
+      clearReservationsError();
+    }
+
+    setDisapproveReservationId(null);
   };
 
   const handleEditVehicle = (vehicle: Vehicule) => {
@@ -579,6 +628,7 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
                         className="px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                       >
                         <option value="all">Tous</option>
+                        <option value="pending">En attente</option>
                         <option value="confirmed">Confirmée</option>
                         <option value="cancelled">Annulée</option>
                       </select>
@@ -622,16 +672,16 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
                       <div className="text-sm text-gray-600">Total Réservations</div>
                     </div>
                     <div className="text-center">
+                      <div className="text-2xl font-bold text-yellow-600">
+                        {reservations.filter(r => r.status === 'pending').length}
+                      </div>
+                      <div className="text-sm text-gray-600">En attente</div>
+                    </div>
+                    <div className="text-center">
                       <div className="text-2xl font-bold text-green-600">
                         {reservations.filter(r => r.status === 'confirmed').length}
                       </div>
-                      <div className="text-sm text-gray-600">En cours</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-yellow-600">
-                        {reservations.filter(r => r.status === 'cancelled').length}
-                      </div>
-                      <div className="text-sm text-gray-600">Terminés</div>
+                      <div className="text-sm text-gray-600">Confirmées</div>
                     </div>
                     <div className="text-center">
                       <div className="text-2xl font-bold text-red-600">
@@ -664,7 +714,11 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
                       reservation={reservation}
                       vehicle={vehicle}
                       onCancel={handleCancelReservation}
+                      onApprove={handleApproveReservation}
+                      onDisapprove={handleDisapproveReservation}
+                      isAdmin={isAdmin}
                       user={reservation.user}
+                      currentUserId={user.id}
                     />
                   ) : null;
                 })
@@ -896,6 +950,36 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
           onSubmit={handlePasswordSubmit}
         />
       )}
+
+      {/* Approve Reservation Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={showApproveConfirmDialog}
+        title="Approuver la réservation"
+        message="Êtes-vous sûr de vouloir approuver cette réservation ? La réservation sera confirmée et le véhicule sera réservé pour les dates spécifiées."
+        confirmText="Approuver"
+        cancelText="Annuler"
+        onConfirm={confirmApproveReservation}
+        onCancel={() => {
+          setShowApproveConfirmDialog(false);
+          setApproveReservationId(null);
+        }}
+        variant="primary"
+      />
+
+      {/* Disapprove Reservation Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={showDisapproveConfirmDialog}
+        title="Désapprouver la réservation"
+        message="Êtes-vous sûr de vouloir désapprouver cette réservation ? La réservation sera annulée définitivement."
+        confirmText="Désapprouver"
+        cancelText="Annuler"
+        onConfirm={confirmDisapproveReservation}
+        onCancel={() => {
+          setShowDisapproveConfirmDialog(false);
+          setDisapproveReservationId(null);
+        }}
+        variant="destructive"
+      />
     </div>
   );
 }

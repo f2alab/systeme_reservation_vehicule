@@ -5,6 +5,8 @@ import {
   findUserOverlappingReservations,
   getReservationsWithUserId,
   cancelReservation,
+  approveReservation,
+  disapproveReservation,
   getReservationsWithDetails
 } from '../models/Reservation.js';
 import { findUserById } from '../models/User.js';
@@ -15,7 +17,7 @@ const isValidDate = (dateStr) => !isNaN(Date.parse(dateStr));
 
 export const create = async (req, res) => {
   try {
-    const { vehicle_id, start_date, end_date } = req.body;
+    const { vehicle_id, start_date, end_date, motif } = req.body;
     const user_id = req.user?.id; // sera défini par le middleware d'auth
 
     if (!user_id) {
@@ -44,8 +46,8 @@ export const create = async (req, res) => {
       return res.status(409).json({ error: 'Vous avez déjà une réservation en cours qui chevauche ces dates.' });
     }
 
-    if (!vehicle_id || !start_date || !end_date) {
-      return res.status(400).json({ error: 'Véhicule, date de début et date de fin requis.' });
+    if (!vehicle_id || !start_date || !end_date || !motif) {
+      return res.status(400).json({ error: 'Véhicule, date de début, date de fin et motif requis.' });
     }
 
     if (!isValidDate(start_date) || !isValidDate(end_date)) {
@@ -72,7 +74,8 @@ export const create = async (req, res) => {
       user_id,
       vehicle_id,
       start_date,
-      end_date
+      end_date,
+      motif
     });
 
     res.status(201).json(reservation);
@@ -100,13 +103,13 @@ export const getUserReservations = async (req, res) => {
 export const cancel = async (req, res) => {
   try {
     const { id } = req.params;
-    const user_id = req.user?.id;
+    const user = req.user;
 
-    if (!user_id) {
+    if (!user) {
       return res.status(401).json({ error: 'Authentification requise.' });
     }
 
-    const success = await cancelReservation(req.app.get('db'), id, user_id);
+    const success = await cancelReservation(req.app.get('db'), id, user.id, user.role === 'admin');
 
     if (!success) {
       return res.status(404).json({ error: 'Réservation non trouvée ou déjà annulée.' });
@@ -116,6 +119,50 @@ export const cancel = async (req, res) => {
   } catch (error) {
     console.error('Erreur annulation réservation:', error);
     res.status(500).json({ error: 'Impossible d\'annuler la réservation.' });
+  }
+};
+
+export const approve = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = req.user;
+
+    if (!user || user.role !== 'admin') {
+      return res.status(403).json({ error: 'Accès refusé. Droits d\'administrateur requis.' });
+    }
+
+    const success = await approveReservation(req.app.get('db'), id);
+
+    if (!success) {
+      return res.status(404).json({ error: 'Réservation non trouvée ou déjà approuvée.' });
+    }
+
+    res.json({ message: 'Réservation approuvée avec succès.' });
+  } catch (error) {
+    console.error('Erreur approbation réservation:', error);
+    res.status(500).json({ error: 'Impossible d\'approuver la réservation.' });
+  }
+};
+
+export const disapprove = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = req.user;
+
+    if (!user || user.role !== 'admin') {
+      return res.status(403).json({ error: 'Accès refusé. Droits d\'administrateur requis.' });
+    }
+
+    const success = await disapproveReservation(req.app.get('db'), id);
+
+    if (!success) {
+      return res.status(404).json({ error: 'Réservation non trouvée ou déjà désapprouvée.' });
+    }
+
+    res.json({ message: 'Réservation désapprouvée avec succès.' });
+  } catch (error) {
+    console.error('Erreur désapprobation réservation:', error);
+    res.status(500).json({ error: 'Impossible de désapprouver la réservation.' });
   }
 };
 

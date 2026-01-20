@@ -20,6 +20,8 @@ export const API_ENDPOINTS = {
     CREATE: '/reservations/create',
     GET_USER: '/reservations/user',
     CANCEL: '/reservations/cancel/',
+    APPROVE: '/reservations/approve/',
+    DISAPPROVE: '/reservations/disapprove/',
     GET_ALL: '/reservations/all',
   },
 };

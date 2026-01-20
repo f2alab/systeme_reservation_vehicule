@@ -31,7 +31,8 @@ export interface Reservation {
   vehicule_id: number;
   start_date: string;
   end_date: string;
-  status: 'confirmed' | 'cancelled';
+  status: 'pending' | 'confirmed' | 'cancelled';
+  motif: string;
   createdAt: string;
 }
 

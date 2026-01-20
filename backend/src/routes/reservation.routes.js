@@ -10,6 +10,9 @@ const reservationRoutes = Router();
 reservationRoutes.post('/create', authMiddleware, reservationController.create);
 reservationRoutes.get('/user', authMiddleware, reservationController.getUserReservations);
 reservationRoutes.put('/cancel/:id', authMiddleware, reservationController.cancel);
+// routes admin seulement
+reservationRoutes.put('/approve/:id', authMiddleware, adminMiddleware, reservationController.approve);
+reservationRoutes.put('/disapprove/:id', authMiddleware, adminMiddleware, reservationController.disapprove);
 // recupérer toutes les réservations (pour admin, par exemple)
 reservationRoutes.get('/all', authMiddleware, adminMiddleware, reservationController.getAllReservationsWithDetails);
 

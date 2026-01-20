@@ -7,6 +7,7 @@ export interface CreateReservationData {
   vehicle_id: number;
   start_date: string;
   end_date: string;
+  motif: string;
 }
 
 export interface ReservationWithDetails extends Reservation {
@@ -45,6 +46,18 @@ export const cancelReservation = async (reservationId: string): Promise<{ messag
   return response.data;
 };
 
+// Approuver une réservation (admin)
+export const approveReservation = async (reservationId: string): Promise<{ message: string }> => {
+  const response = await axios.put(`${API_BASE_URL}${API_ENDPOINTS.RESERVATIONS.APPROVE}${reservationId}`);
+  return response.data;
+};
+
+// Désapprouver une réservation (admin)
+export const disapproveReservation = async (reservationId: string): Promise<{ message: string }> => {
+  const response = await axios.put(`${API_BASE_URL}${API_ENDPOINTS.RESERVATIONS.DISAPPROVE}${reservationId}`);
+  return response.data;
+};
+
 // Récupérer toutes les réservations avec détails (admin seulement)
 export const getAllReservationsWithDetails = async (): Promise<ReservationWithDetails[]> => {
   const response = await axios.get(`${API_BASE_URL}${API_ENDPOINTS.RESERVATIONS.GET_ALL}`);
@@ -57,6 +70,7 @@ export const getAllReservationsWithDetails = async (): Promise<ReservationWithDe
     start_date: reservation.start_date,
     end_date: reservation.end_date,
     status: reservation.status,
+    motif: reservation.motif,
     createdAt: reservation.created_at,
     user: {
       id: reservation.user_id,
