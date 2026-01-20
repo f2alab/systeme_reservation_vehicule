@@ -44,7 +44,7 @@ export const cancelReservation = async (db, reservation_id, user_id) => {
 };
 
 // Rrécupérer toutes les réservations avec détails
-export const getAllReservationsWithDetails = async (db) => {
+export const getReservationsWithDetails = async (db) => {
   const stmt = await db.prepare(`
     SELECT
       r.id, r.start_date, r.end_date, r.status, r.created_at,

@@ -3,7 +3,8 @@ import {
   createReservation,
   findOverlappingReservations,
   getReservationsWithUserId,
-  cancelReservation
+  cancelReservation,
+  getReservationsWithDetails
 } from '../models/Reservation.js';
 
 // Fonction utilitaire pour valider les dates
@@ -96,7 +97,7 @@ export const cancel = async (req, res) => {
 
 export const getAllReservationsWithDetails = async (req, res) => {
   try {
-    const reservations = await getAllReservationsWithDetails(req.app.get('db'));
+    const reservations = await getReservationsWithDetails(req.app.get('db'));
     res.json(reservations);
   } catch (error) {
     console.error('Erreur historique réservations:', error);
