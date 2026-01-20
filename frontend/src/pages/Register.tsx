@@ -40,7 +40,7 @@ export default function Register() {
             return;
         }
 
-        // Show confirmation dialog
+        // Afficher la boîte de dialogue de confirmation
         setShowConfirmDialog(true);
     };
 

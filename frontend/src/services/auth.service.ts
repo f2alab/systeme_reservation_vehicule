@@ -70,4 +70,19 @@ export const authService = {
   removeAuthToken() {
     delete axios.defaults.headers.common['Authorization'];
   },
+
+  async getAllUsers(): Promise<any[]> {
+    const response = await axios.get(
+      `${API_BASE_URL}${API_ENDPOINTS.AUTH.GET_ALL_USERS}`
+    );
+    return response.data;
+  },
+
+  async updateUserStatus(userId: number, status: string): Promise<any> {
+    const response = await axios.put(
+      `${API_BASE_URL}${API_ENDPOINTS.AUTH.UPDATE_USER_STATUS}${userId}`,
+      { status }
+    );
+    return response.data;
+  },
 };

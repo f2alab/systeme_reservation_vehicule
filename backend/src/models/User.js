@@ -44,3 +44,9 @@ export const updatePasswordUser = async (db, id, hashedPassword) => {
   const result = await stmt.run(hashedPassword, id);
   return result.changes > 0; // Retourne true si une ligne a été modifiée
 };
+
+// Obtenir tous les utilisateurs (seulement admin)
+export const getAllUsers = async (db) => {
+  const stmt = await db.prepare('SELECT id, name, email, role, status, created_at, updated_at FROM users WHERE role != "admin" ORDER BY created_at DESC');
+  return await stmt.all();
+};

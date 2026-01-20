@@ -1,7 +1,7 @@
 // Impotation des modules nécessaires
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { findUserByEmail, createUser, updateUserStatus, updatePasswordUser } from '../models/User.js';
+import { findUserByEmail, createUser, updateUserStatus, updatePasswordUser, getAllUsers } from '../models/User.js';
 
 // Clé secrète JWT
 const JWT_SECRET = process.env.JWT_SECRET || 'togo-data-lab-reservation-secret';
@@ -127,5 +127,26 @@ export const updateStatus = async (req, res) => {
   } catch (error) {
     console.error('Erreur mise à jour statut utilisateur:', error);
     res.status(500).json({ error: 'Impossible de mettre à jour le statut de l’utilisateur.' });
+  }
+};
+
+// Obtenir tous les utilisateurs (admin seulement)
+export const getAll = async (req, res) => {
+  try {
+    const users = await getAllUsers(req.app.get('db'));
+    // Transformer les données pour correspondre à l'interface User
+    const transformedUsers = users.map(user => ({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      status: user.status,
+      createdAt: user.created_at,
+      updatedAt: user.updated_at
+    }));
+    res.json(transformedUsers);
+  } catch (error) {
+    console.error('Erreur obtenir tous les utilisateurs:', error);
+    res.status(500).json({ error: 'Impossible de récupérer les utilisateurs.' });
   }
 };

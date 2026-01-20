@@ -5,6 +5,8 @@ export const API_ENDPOINTS = {
     REGISTER: '/auth/register',
     UPDATE_PASSWORD: '/auth/password',
     ME: '/auth/me',
+    GET_ALL_USERS: '/auth/users',
+    UPDATE_USER_STATUS: '/auth/status/',
   },
   VEHICLES: {
     GET_ALL: '/vehicules',

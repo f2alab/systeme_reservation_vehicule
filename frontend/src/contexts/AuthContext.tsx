@@ -23,7 +23,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Verifier si un token d'authentification est stocké dans le localStorage
+    // Vérifier si un token d'authentification est stocké dans le localStorage
     const token = localStorage.getItem('authToken');
     const savedUser = localStorage.getItem('currentUser');
 
@@ -45,7 +45,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const response = await authService.login({ email, password });
 
-      // Creer un objet User à partir de la réponse
+      // Créer un objet User à partir de la réponse
       const userData: User = {
         id: response.user.id,
         name: response.user.name,

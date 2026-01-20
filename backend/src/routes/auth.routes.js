@@ -20,4 +20,7 @@ authRoutes.put('/status/:id', authMiddleware, adminMiddleware, authController.up
 // route pour mettre à jour le mot de passe de l'utilisateur connecté
 authRoutes.put('/password', authMiddleware, authController.updatePassword);
 
+// route pour obtenir tous les utilisateurs (seulement admin)
+authRoutes.get('/users', authMiddleware, adminMiddleware, authController.getAll);
+
 export default authRoutes;

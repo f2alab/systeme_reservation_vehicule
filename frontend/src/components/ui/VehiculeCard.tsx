@@ -6,11 +6,12 @@ interface VehicleCardProps {
     vehicle: Vehicule;
     onReserve: (vehicle: Vehicule) => void;
     isAdmin: boolean;
+    userStatus?: string;
     onEdit: (vehicle: Vehicule) => void;
     onDelete: (vehicle: Vehicule) => void;
 }
 
-const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onReserve, isAdmin, onEdit, onDelete }) => {
+const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onReserve, isAdmin, userStatus, onEdit, onDelete }) => {
     const translateFuelType = (fuelType: string) => {
         switch (fuelType) {
             case 'electric':
@@ -119,12 +120,18 @@ const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onReserve, isAdmin, 
                         </button>
                     </div>
                 ) : (
-                    <button
-                        onClick={() => onReserve(vehicle)}
-                        className="w-full bg-linear-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold py-2 rounded-lg transition duration-200 transform hover:scale-105"
-                    >
-                        Réserver Maintenant
-                    </button>
+                    userStatus === 'active' ? (
+                        <button
+                            onClick={() => onReserve(vehicle)}
+                            className="w-full bg-linear-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold py-2 rounded-lg transition duration-200 transform hover:scale-105"
+                        >
+                            Réserver Maintenant
+                        </button>
+                    ) : (
+                        <div className="w-full bg-gray-300 text-gray-500 font-semibold py-2 rounded-lg text-center cursor-not-allowed">
+                            Compte inactif - Réservation impossible
+                        </div>
+                    )
                 )}
             </div>
         </div>

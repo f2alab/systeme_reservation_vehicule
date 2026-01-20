@@ -1,16 +1,18 @@
-// components/Dashboard.tsx
+
 import { useState, useEffect } from 'react';
 import type { User, Vehicule } from '../types/models';
 import { useToast } from '../contexts/ToastContext';
 import { useVehicules } from '../hooks/useVehicules';
 import { useReservations } from '../hooks/useReservations';
+import { useUsers } from '../hooks/useUsers';
 import ReservationModal from '../components/ui/ReservationModal';
 import VehicleModal from '../components/ui/VehicleModal';
 import PasswordModal from '../components/ui/PasswordModal';
 import VehicleCard from '../components/ui/VehiculeCard';
 import ReservationCard from '../components/ui/ReservationCard';
+import UserCard from '../components/ui/UserCard';
 import ConfirmationDialog from '../components/ui/ConfirmationDialog';
-import { Car, ChevronDown, ChevronUp } from 'lucide-react';
+import { Car, ChevronDown, ChevronUp, Calendar, Users, User as UserIcon, Plus, LogOut } from 'lucide-react';
 
 
 
@@ -38,11 +40,16 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
     clearError: clearReservationsError
   } = useReservations();
 
+  const {
+    users,
+    loading: usersLoading,
+    updateUserStatus  } = useUsers();
+
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicule | null>(null);
   const [showReservationModal, setShowReservationModal] = useState(false);
   const [showVehicleModal, setShowVehicleModal] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState<Vehicule | null>(null);
-  const [activeTab, setActiveTab] = useState<'vehicles' | 'reservations' | 'profile'>('vehicles');
+  const [activeTab, setActiveTab] = useState<'vehicles' | 'reservations' | 'users' | 'profile'>('vehicles');
   const [vehicleSearch, setVehicleSearch] = useState('');
   const [vehicleFuelFilter, setVehicleFuelFilter] = useState<string>('all');
   const [vehicleStatusFilter, setVehicleStatusFilter] = useState<string>('all');
@@ -59,6 +66,7 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
   const [isReservationSearchExpanded, setIsReservationSearchExpanded] = useState(false);
   const [isReservationStatsExpanded, setIsReservationStatsExpanded] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const { showToast } = useToast();
 
   const handleReserve = (vehicle: Vehicule) => {
@@ -80,7 +88,7 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
       setShowReservationModal(false);
       setSelectedVehicle(null);
     } else {
-      // Show the actual error message from the result
+      // Afficher le message d'erreur réel du résultat
       showToast(result.error || 'Erreur lors de la création de la réservation', 'error');
     }
   };
@@ -100,7 +108,7 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
       showToast('Réservation annulée avec succès !', 'success');
     } else {
       showToast(reservationsError || 'Erreur lors de l\'annulation de la réservation', 'error');
-      clearReservationsError(); // Clear the error after showing it
+      clearReservationsError(); // Effacer l'erreur après l'avoir affichée
     }
 
     setCancelReservationId(null);
@@ -118,7 +126,7 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
 
   const handleVehicleSubmit = async (vehicleData: Omit<Vehicule, 'id' | 'createdAt' | 'updatedAt'>) => {
     if (editingVehicle) {
-      // Edit mode
+      // Mode édition
       const success = await updateVehiculeInfo(editingVehicle.id.toString(), vehicleData);
       if (success) {
         showToast('Véhicule modifié avec succès !', 'success');
@@ -126,7 +134,7 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
         showToast('Erreur lors de la modification du véhicule', 'error');
       }
     } else {
-      // Add mode
+      // Mode ajout
       const newVehicle = await createNewVehicule(vehicleData);
       if (newVehicle) {
         showToast('Véhicule ajouté avec succès !', 'success');
@@ -166,24 +174,24 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
 
   const handlePasswordSubmit = async (newPassword: string) => {
     try {
-      // Import authService here to avoid circular imports
+      // Importer authService ici pour éviter les importations circulaires
       const { authService } = await import('../services/auth.service');
 
       await authService.updatePassword(newPassword);
       showToast('Mot de passe modifié avec succès ! Vous allez être déconnecté.', 'success');
       setShowPasswordModal(false);
 
-      // Automatically logout after successful password change
+      // Se déconnecter automatiquement après un changement de mot de passe réussi
       setTimeout(() => {
         onLogout();
-      }, 2000); // Give user time to see the success message
+      }, 2000); // Donner du temps à l'utilisateur pour voir le message de succès
     } catch (error: any) {
       console.error('Password update error:', error);
       showToast(error.response?.data?.error || 'Erreur lors de la modification du mot de passe', 'error');
     }
   };
 
-  // Filtering functions
+  // Fonctions de filtrage
   const filteredVehicles = vehicles.filter((vehicle) => {
     const matchesSearch = vehicleSearch === '' ||
       vehicle.brand.toLowerCase().includes(vehicleSearch.toLowerCase()) ||
@@ -235,8 +243,28 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
     }
   }, [activeTab, isAdmin, loadAllReservations, loadUserReservations]);
 
+  // Charger les informations de l'utilisateur actuel quand on accède à l'onglet Profil
+  useEffect(() => {
+    const loadCurrentUser = async () => {
+      if (activeTab === 'profile') {
+        try {
+          const { authService } = await import('../services/auth.service');
+          const token = localStorage.getItem('token');
+          if (token) {
+            const userData = await authService.getCurrentUser(token);
+            setCurrentUser(userData);
+          }
+        } catch (error) {
+          console.error('Erreur lors du chargement des informations utilisateur:', error);
+        }
+      }
+    };
+
+    loadCurrentUser();
+  }, [activeTab]);
+
   // Chargement initial - attendre que les données soient chargées
-  if (vehiclesLoading || reservationsLoading) {
+  if (vehiclesLoading || reservationsLoading || usersLoading) {
     return (
       <div className="min-h-screen bg-linear-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center">
         <div className="text-center">
@@ -282,8 +310,9 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
           </div>
           <button
             onClick={() => setShowLogoutConfirmDialog(true)}
-            className="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-400 transition"
+            className="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-400 transition flex items-center gap-2"
           >
+            <LogOut className="w-5 h-5" />
             Déconnexion
           </button>
         </div>
@@ -301,9 +330,7 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
                   : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
             >
-              <svg className="inline-block w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12M8 11h12M8 15h12M3 7l.75.75M2.75 7H4m-.25 4h1.5M3 15l.75.75M2.75 15H4" />
-              </svg>
+              <Car className="inline-block w-5 h-5 mr-2" />
               Voitures
             </button>
             <button
@@ -314,11 +341,22 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
                   : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
             >
-              <svg className="inline-block w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-              </svg>
+              <Calendar className="inline-block w-5 h-5 mr-2" />
               Réservations
             </button>
+            {isAdmin && (
+              <button
+                onClick={() => setActiveTab('users')}
+                className={`px-4 py-3 font-medium border-b-2 transition ${
+                  activeTab === 'users'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <Users className="inline-block w-5 h-5 mr-2" />
+                Utilisateurs
+              </button>
+            )}
             <button
               onClick={() => setActiveTab('profile')}
               className={`px-4 py-3 font-medium border-b-2 transition ${
@@ -327,9 +365,7 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
                   : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
             >
-              <svg className="inline-block w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
+              <UserIcon className="inline-block w-5 h-5 mr-2" />
               Profil
             </button>
           </div>
@@ -350,9 +386,7 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
                   onClick={handleAddVehicle}
                   className="px-6 py-3 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-lg transition flex items-center gap-2"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
+                  <Plus className="w-5 h-5" />
                   Ajouter un véhicule
                 </button>
               </div>
@@ -487,6 +521,7 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
                   vehicle={vehicle}
                   onReserve={handleReserve}
                   isAdmin={isAdmin}
+                  userStatus={user.status}
                   onEdit={handleEditVehicle}
                   onDelete={handleDeleteVehicle}
                 />
@@ -636,6 +671,42 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
           </>
         )}
 
+        {/* Users Tab */}
+        {activeTab === 'users' && isAdmin && (
+          <>
+            <div className="mb-4">
+              <p className="text-sm text-gray-600">
+                {users.length} utilisateur(s) trouvé(s)
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              {users.length === 0 ? (
+                <div className="text-center py-12">
+                  <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                  <p className="text-gray-500 text-lg">Aucun utilisateur trouvé</p>
+                </div>
+              ) : (
+                users.map((userItem) => (
+                  <UserCard
+                    key={userItem.id}
+                    user={userItem}
+                    onStatusChange={(userId, newStatus) => {
+                      updateUserStatus(userId, newStatus);
+                      showToast(
+                        `Utilisateur ${newStatus === 'active' ? 'activé' : 'désactivé'} avec succès !`,
+                        'success'
+                      );
+                    }}
+                  />
+                ))
+              )}
+            </div>
+          </>
+        )}
+
         {/* Profile Tab */}
         {activeTab === 'profile' && (
           <div className="max-w-2xl mx-auto">
@@ -680,8 +751,12 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Statut du compte
                     </label>
-                    <div className="px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-900">
-                      {user.status === 'active' ? 'Actif' : 'Inactif'}
+                    <div className={`px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg font-medium ${
+                      currentUser?.status === 'active'
+                        ? 'text-green-700 border-green-300'
+                        : 'text-red-700 border-red-300'
+                    }`}>
+                      {currentUser?.status === 'active' ? 'Actif' : 'Inactif'}
                     </div>
                   </div>
                 </div>

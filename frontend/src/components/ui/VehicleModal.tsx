@@ -57,7 +57,7 @@ export default function VehicleModal({
       return;
     }
 
-    // Show confirmation dialog
+    // Afficher la boîte de dialogue de confirmation
     setShowConfirmDialog(true);
   };
 
@@ -110,7 +110,7 @@ export default function VehicleModal({
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Brand and Model */}
+          {/* Brand et Model */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
